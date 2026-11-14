@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1230">
+<title>Bubble Pop Rewards</title>
+<style>
+:root{--bg:#0b1230;--bg2:#121a44;--card:#1a2358;--card2:#232e72;--line:#34429a;--blue:#4c7dff;--purple:#8b5cf6;--gold:#ffc83d;--text:#eef1ff;--mut:#9aa6e6;--ok:#34d399;--bad:#fb7185}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:radial-gradient(1200px 600px at 50% -10%,#24307a 0%,var(--bg) 60%) fixed;color:var(--text);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+#app{max-width:980px;margin:0 auto;min-height:100%;padding:0 14px 96px}
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:12px 0;background:linear-gradient(var(--bg),transparent)}
+header.top h1{font-size:18px;margin:0;flex:1}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700}
+.chip.gold{color:var(--gold)}
+.back{background:var(--card);border-radius:12px;padding:8px 12px}
+.card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0;box-shadow:0 8px 24px #0006}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px;border-radius:16px;background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);position:relative;transition:transform .15s}
+.tile:active{transform:scale(.96)}
+.tile .ic{font-size:30px}
+.dot{position:absolute;top:8px;right:10px;width:10px;height:10px;border-radius:50%;background:var(--bad);box-shadow:0 0 8px var(--bad)}
+.btn{background:linear-gradient(90deg,var(--blue),var(--purple));padding:11px 18px;border-radius:12px;font-weight:700;box-shadow:0 4px 14px #4c7dff55}
+.btn.alt{background:var(--card2);border:1px solid var(--line);box-shadow:none}
+.btn.gold{background:linear-gradient(90deg,#ffb300,#ffd75e);color:#2a1d00}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+.row{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+.mut{color:var(--mut);font-size:13px}
+.bar{height:12px;background:#0b1230;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;transition:width .6s}
+h2{margin:14px 0 4px;font-size:16px}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;background:#0b1230ee;backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.bottom div{display:flex;width:100%;max-width:980px}
+nav.bottom button{flex:1;background:none;padding:9px 0;color:var(--mut);display:flex;flex-direction:column;align-items:center;font-size:11px;gap:2px}
+nav.bottom button b{font-size:22px;font-weight:400}
+nav.bottom button.on{color:#fff}
+nav.bottom button.on b{filter:drop-shadow(0 0 8px var(--blue))}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 2px;text-align:center;font-size:12px}
+.day.done{background:#12403a;border-color:var(--ok)}
+.day.now{border-color:var(--gold);box-shadow:0 0 14px #ffc83d66;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.badge{display:inline-flex;flex-direction:column;align-items:center;gap:2px;width:84px;font-size:11px;text-align:center}
+.badge i{font-style:normal;font-size:30px;filter:grayscale(1) opacity(.4)}
+.badge.on i{filter:none}
+.wheel-wrap{position:relative;width:min(300px,80vw);aspect-ratio:1;margin:10px auto}
+.wheel{width:100%;height:100%;border-radius:50%;border:6px solid var(--gold);transition:transform 4s cubic-bezier(.1,.7,.1,1);position:relative}
+.wheel span{position:absolute;left:50%;top:50%;transform-origin:0 0;font-size:12px;font-weight:700;width:46%;text-align:right;padding-right:8px;text-shadow:0 1px 2px #000}
+.pin{position:absolute;top:-12px;left:50%;margin-left:-12px;border:12px solid transparent;border-top:22px solid var(--gold);z-index:2}
+.chest{font-size:84px;text-align:center;cursor:pointer;transition:transform .2s}
+.chest.ready{animation:bob 1s infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-4deg)}}
+.fly{position:fixed;z-index:100;font-size:24px;pointer-events:none;transition:transform .9s cubic-bezier(.5,-.3,.6,1),opacity .9s}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;border:1px solid var(--line);padding:10px 16px;border-radius:12px;z-index:200;max-width:90vw}
+.modal{position:fixed;inset:0;background:#000a;z-index:150;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:400px;width:100%;text-align:center;animation:pop .35s}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+input,select{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font:inherit}
+.tabs{display:flex;gap:6px;margin:8px 0}.tabs button{flex:1;padding:8px;border-radius:10px;background:var(--bg2);border:1px solid var(--line)}.tabs button.on{background:var(--blue)}
+table{width:100%;border-collapse:collapse}td,th{padding:7px 4px;text-align:left;border-bottom:1px solid #ffffff14}
+.note{background:#2a2160;border:1px dashed var(--purple);border-radius:12px;padding:8px 10px;font-size:12px;color:#cfc3ff;margin-top:8px}
+.tier{display:grid;grid-template-columns:44px 1fr 1fr;gap:6px;align-items:center;margin:4px 0}
+.tier>div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-size:12px}
+@media(min-width:760px){#app{padding-top:10px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="bottom"><div id="nav"></div></nav>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   CONFIG - fill these in. Only the ANON key belongs here.
+   NEVER put the service-role key in frontend code.
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: "https://YOUR-PROJECT.supabase.co",
+  SUPABASE_ANON_KEY: "YOUR-ANON-KEY",
+  GAME_URL: "",                       // URL of your Bubble Pop index.html (opened in an overlay)
+  PLAY_STORE_URL: "",                 // market://details?id=your.package
+  APP_VERSION: "1.0.0",
+  SHARE_URL: location.origin + location.pathname
+};
+
+/* ---------- i18n (EN / HI) ---------- */
+const I18N = {
+  en:{home:"Home",rewards:"Rewards",shop:"Shop",board:"Ranks",me:"Profile",play:"Play",coins:"Coins",claim:"Claim",claimed:"Claimed",
+    missions:"Missions",daily:"Daily Rewards",collection:"Collection",spin:"Lucky Spin",chest:"Reward Chest",challenge:"Daily Challenge",
+    ach:"Achievements",events:"Weekly Events",season:"Season Pass",refer:"Referral Center",settings:"Settings",leader:"Leaderboard",
+    more:"More Games",piggy:"Piggy Bank",streak:"Streak",level:"Level",back:"Back",buy:"Buy",owned:"Owned",equip:"Equip",equipped:"Equipped",
+    watch:"Watch ad",lang:"Language",privacy:"Privacy policy",save:"Save",welcome:"Welcome back!",ready:"Ready!",premium:"Premium",history:"Transaction history",
+    share:"Share",tip:"Needs native Android app"},
+  hi:{home:"होम",rewards:"इनाम",shop:"शॉप",board:"रैंक",me:"प्रोफ़ाइल",play:"खेलें",coins:"सिक्के",claim:"लें",claimed:"ले लिया",
+    missions:"मिशन",daily:"दैनिक इनाम",collection:"कलेक्शन",spin:"लकी स्पिन",chest:"इनाम बॉक्स",challenge:"डेली चैलेंज",
+    ach:"उपलब्धियाँ",events:"साप्ताहिक इवेंट",season:"सीज़न पास",refer:"रेफ़रल सेंटर",settings:"सेटिंग्स",leader:"लीडरबोर्ड",
+    more:"और गेम्स",piggy:"गुल्लक",streak:"स्ट्रीक",level:"लेवल",back:"वापस",buy:"खरीदें",owned:"मिल गया",equip:"लगाएँ",equipped:"लगा है",
+    watch:"विज्ञापन देखें",lang:"भाषा",privacy:"गोपनीयता नीति",save:"सेव",welcome:"वापसी पर स्वागत!",ready:"तैयार!",premium:"प्रीमियम",history:"लेन-देन इतिहास",
+    share:"शेयर",tip:"एंड्रॉइड ऐप चाहिए"}
+};
+let LANG = localStorage.getItem("bp_lang") || "en";
+const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Number(n || 0).toLocaleString();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const ERR = {not_enough_coins:"Not enough coins",already_claimed:"Already claimed",ad_daily_limit:"Daily ad limit reached",ad_cooldown:"Please wait before the next ad",
+  ad_not_verified:"Ad not verified yet",share_daily_limit:"Daily share limit reached",share_cooldown:"Share cooldown active",play_a_game_first:"Play a game first, then share",
+  chest_not_ready:"Chest not ready yet",free_spin_used:"Free spin already used today",freeze_not_needed:"No streak to save right now",freeze_limit:"Monthly freeze limit reached",
+  not_complete:"Not complete yet",username_taken:"Username already taken",ads_removed:"Ads are removed on your account",tier_locked:"Tier locked",premium_required:"Premium pass required",
+  already_done:"Already done",too_fast:"Slow down a little",not_authenticated:"Please sign in"};
+const errMsg = e => { const m = (e && e.message) || String(e); const k = Object.keys(ERR).find(k => m.includes(k)); return k ? ERR[k] : m; };
+function toast(m, ms = 2600){ const d = document.createElement("div"); d.className = "toast"; d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), ms); }
+function vib(p){ if (S?.settings?.vibration !== false && navigator.vibrate) navigator.vibrate(p); }
+function coinBurst(from, n = 10, emoji = "🪙"){
+  const target = document.querySelector("#coinChip")?.getBoundingClientRect(); const r = (from || document.body).getBoundingClientRect?.() || {left:innerWidth/2,top:innerHeight/2,width:0,height:0};
+  for (let i = 0; i < n; i++){ const f = document.createElement("div"); f.className = "fly"; f.textContent = emoji;
+    f.style.left = r.left + r.width/2 + "px"; f.style.top = r.top + r.height/2 + "px"; document.body.appendChild(f);
+    requestAnimationFrame(() => { setTimeout(() => { f.style.transform = `translate(${(target ? target.left - r.left : 0) + (Math.random()*40-20)}px,${(target ? target.top - r.top : -300)}px) scale(.5)`; f.style.opacity = .1; }, i*50); });
+    setTimeout(() => f.remove(), 1200 + i*50); }
+  vib(30);
+}
+function modal(html, onClose){ const m = document.createElement("div"); m.className = "modal"; m.innerHTML = `<div class="box">${html}<p><button class="btn" id="mclose">OK</button></p></div>`;
+  document.body.appendChild(m); m.querySelector("#mclose").onclick = () => { m.remove(); onClose && onClose(); }; }
+function countdown(el, endMs, doneText, onDone){
+  const tick = () => { const s = Math.max(0, Math.floor((endMs - Date.now())/1000)); if (!document.body.contains(el)) return clearInterval(iv);
+    if (s <= 0){ el.textContent = doneText; clearInterval(iv); onDone && onDone(); return; }
+    el.textContent = [Math.floor(s/3600), Math.floor(s%3600/60), s%60].map(x => String(x).padStart(2,"0")).join(":"); };
+  const iv = setInterval(tick, 1000); tick();
+}
+
+/* ---------- backend ---------- */
+let sb, S = null, CFG = {}, view = "home", clockSkew = 0;
+const configured = () => !CONFIG.SUPABASE_URL.includes("YOUR-PROJECT");
+async function rpc(fn, args){ const { data, error } = await sb.rpc(fn, args || {}); if (error) throw error; return data; }
+async function refresh(){ S = await rpc("get_state"); clockSkew = new Date(S.now).getTime() - Date.now(); if (S.profile?.language) { LANG = S.profile.language; localStorage.setItem("bp_lang", LANG); } updateChip(); }
+const nowMs = () => Date.now() + clockSkew;
+function updateChip(){ const c = $("#coinChip"); if (c) c.textContent = "🪙 " + fmt(S?.wallet?.coins); const l = $("#lvlChip"); if (l) l.textContent = "⭐ " + (S?.xp?.level || 1); }
+async function loadConfig(){ const { data } = await sb.from("remote_config").select("key,value"); CFG = Object.fromEntries((data || []).map(r => [r.key, r.value])); }
+
+/* ---------- native bridges (Android WebView wrapper). Absent on plain web => features are disabled, never faked ---------- */
+const NATIVE = {
+  ads: () => !!(window.AndroidAds && window.AndroidAds.showRewarded),
+  billing: () => !!(window.AndroidBilling && window.AndroidBilling.purchase),
+  review: () => !!(window.AndroidReview && window.AndroidReview.request),
+  games: () => !!(window.AndroidPlayGames),
+  interstitial: () => !!(window.AndroidAds && window.AndroidAds.showInterstitial)
+};
+const adWaiters = {};
+window.onRewardedAdComplete = nonce => adWaiters[nonce] && adWaiters[nonce](true);   // native calls this ONLY on real completion
+window.onRewardedAdFailed = nonce => adWaiters[nonce] && adWaiters[nonce](false);
+async function rewardedAd(purpose, ref){
+  if (!NATIVE.ads()) { toast(t("tip") + " (AdMob)"); return null; }
+  const { nonce, user_id } = await rpc("ad_request", { p_purpose: purpose });
+  const ok = await new Promise(res => { adWaiters[nonce] = res; window.AndroidAds.showRewarded(nonce, user_id); });
+  if (!ok) { toast("Ad not completed - no reward"); return null; }
+  for (let i = 0; i < 12; i++){            // wait for the ad network's server-side verification callback
+    try { return await rpc("ad_claim", { p_nonce: nonce, p_ref: ref || null }); }
+    catch (e) { if (!String(e.message).includes("ad_not_verified")) throw e; await sleep(1500); }
+  }
+  toast("Ad verification pending - try again shortly"); return null;
+}
+window.onPurchaseComplete = async (sku, token) => {
+  try { const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch(CONFIG.SUPABASE_URL + "/functions/v1/verify-purchase", { method: "POST",
+      headers: { "content-type": "application/json", Authorization: "Bearer " + session.access_token, apikey: CONFIG.SUPABASE_ANON_KEY }, body: JSON.stringify({ sku, purchaseToken: token }) });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error); toast("Purchase verified"); await refresh(); render();
+  } catch (e) { toast("Purchase failed: " + errMsg(e)); }
+};
+function buy(sku){ if (!NATIVE.billing()) return toast(t("tip") + " (Google Play Billing)"); window.AndroidBilling.purchase(sku); }
+
+/* ---------- offline queue (safe sync: replayed through the same validated RPC) ---------- */
+const Q_KEY = "bp_queue";
+const getQ = () => { try { return JSON.parse(localStorage.getItem(Q_KEY) || "[]"); } catch { return []; } };
+async function flushQueue(){ let q = getQ(); while (q.length){ try { await rpc("submit_game_result", q[0]); q.shift(); localStorage.setItem(Q_KEY, JSON.stringify(q)); } catch (e) { if (!navigator.onLine) break; q.shift(); localStorage.setItem(Q_KEY, JSON.stringify(q)); } } }
+window.addEventListener("online", () => flushQueue().then(() => refresh()).catch(() => {}));
+
+/* ---------- PUBLIC API for the game ---------- */
+window.BubbleRewards = {
+  async submitResult({ place = 0, score = 0, popped = 0, powerups = 0, won = null }){
+    const args = { p_place: place, p_score: score, p_popped: popped, p_powerups: powerups, p_won: won };
+    let r; try { r = await rpc("submit_game_result", args); } catch (e) { if (!navigator.onLine){ const q = getQ(); q.push(args); localStorage.setItem(Q_KEY, JSON.stringify(q)); toast("Saved offline - will sync"); return null; } toast(errMsg(e)); return null; }
+    await refresh(); if (r.coins_awarded) coinBurst(null, 12);
+    if (r.xp?.leveled_up) modal(`<h2>🎉 ${t("level")} ${r.xp.level}!</h2><p>+${fmt(r.xp.level_coins)} 🪙</p>`);
+    if (r.can_double && NATIVE.ads()) { if (confirm(`Double ${r.coins_awarded} coins by watching an ad?`)) { const d = await rewardedAd("double", r.double_ref); if (d) { await refresh(); coinBurst(null, 12); } } }
+    if (r.show_interstitial && NATIVE.interstitial()) window.AndroidAds.showInterstitial();   // only here: between games, never mid-game
+    if (r.show_review_prompt && NATIVE.review()) window.AndroidReview.request();                // Play in-app review; never rewarded
+    return r;
+  },
+  async submitDaily(score, stars){ const r = await rpc("submit_daily_challenge", { p_score: score, p_stars: stars || 0 }); await refresh(); coinBurst(null, 12); return r; },
+  async submitChallenge(code, score){ await rpc("submit_challenge_result", { p_code: code, p_score: score }); },
+  async createChallenge(seed, score){ return await rpc("create_challenge", { p_seed: seed, p_score: score }); },
+  async rewardedHelp(){ return await rewardedAd("help"); },        // game then grants hint/undo/continue locally
+  async piggy(n){ try { await rpc("piggy_deposit", { p_amount: n }); } catch (e) {} },
+  show(v){ go(v); }
+};
+window.addEventListener("message", async e => {       // game running in an iframe can postMessage results
+  const d = e.data; if (!d || d.type !== "bp_result") return;
+  const r = await BubbleRewards.submitResult(d);
+  e.source && e.source.postMessage({ type: "bp_result_ack", result: r }, "*");
+});
+
+/* ---------- screens ---------- */
+const NAV = [["home","🏠","home"],["rewards","🎁","rewards"],["shop","🛒","shop"],["board","🏆","board"],["me","👤","me"]];
+const TITLES = { home:"home", rewards:"rewards", daily:"daily", missions:"missions", board:"leader", shop:"shop", collection:"collection", spin:"spin", chest:"chest", challenge:"challenge", ach:"ach", events:"events", season:"season", refer:"refer", settings:"settings", me:"me", more:"more", piggy:"piggy", history:"history" };
+function go(v){ view = v; history.replaceState(null, "", "#" + v); render(); window.scrollTo(0, 0); }
+
+function shell(inner){
+  const main = NAV.some(n => n[0] === view);
+  $("#app").innerHTML = `<header class="top">${main ? "" : `<button class="back" onclick="go('${["spin","chest","daily","missions","challenge","events","season","refer","piggy","history","more","collection","ach"].includes(view) ? "rewards" : "me"}')">← ${t("back")}</button>`}
+    <h1>${t(TITLES[view] || view)}</h1><div class="chip" id="lvlChip">⭐ ${S?.xp?.level || 1}</div><div class="chip gold" id="coinChip">🪙 ${fmt(S?.wallet?.coins)}</div></header>${inner}`;
+  $("#nav").innerHTML = NAV.map(n => `<button class="${view === n[0] ? "on" : ""}" onclick="go('${n[0]}')"><b>${n[1]}</b>${t(n[2])}</button>`).join("");
+}
+function lbl(label, v){ return `<div class="row"><span class="mut sp">${label}</span><b>${v}</b></div>`; }
+function xpBar(){ const lvl = S.xp.level, cur = S.xp.xp, lo = 50 * (lvl-1) ** 2, hi = 50 * lvl ** 2; return `<div class="bar"><i style="width:${Math.min(100, (cur-lo)/(hi-lo)*100)}%"></i></div><div class="mut">${t("level")} ${lvl} · ${fmt(cur-lo)}/${fmt(hi-lo)} XP</div>`; }
+const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(errMsg(e)); } };
+
+const screens = {
+  /* 1. Home dashboard */
+  home(){
+    const chestReady = nowMs() >= new Date(S.chest_ready_at).getTime();
+    const mDone = (S.missions || []).filter(m => m.progress >= m.target && !m.claimed).length;
+    const tile = (v, ic, label, dot) => `<button class="tile" onclick="go('${v}')"><span class="ic">${ic}</span><b>${t(label)}</b>${dot ? '<i class="dot"></i>' : ""}</button>`;
+    return `<div class="card"><div class="row"><div style="font-size:42px">${S.profile.avatar === "cat" ? "🐱" : S.profile.avatar}</div><div class="sp"><b>${esc(S.profile.username || "Player")}</b>${S.profile.is_premium ? ` <span class="chip gold" style="padding:1px 8px">👑 ${t("premium")}</span>` : ""}<div class="mut">🔥 ${t("streak")}: ${S.streak.current_streak} (best ${S.streak.best_streak})</div></div>
+      <button class="btn" onclick="playGame()">▶ ${t("play")}</button></div><div style="margin-top:10px">${xpBar()}</div></div>
+      <div class="grid">${tile("daily","📅","daily",S.login.can_claim)}${tile("missions","🎯","missions",mDone)}${tile("chest","🎁","chest",chestReady)}${tile("spin","🎡","spin",S.free_spin_available)}
+      ${tile("challenge","⚡","challenge")}${tile("events","🎪","events")}${tile("season","🏅","season")}${tile("collection","🧩","collection")}${tile("ach","🎖️","ach")}${tile("refer","🤝","refer")}${tile("piggy","🐷","piggy")}${tile("more","🎮","more")}</div>`;
+  },
+  rewards(){ return screens.home(); },
+
+  /* 2/11. Profile */
+  me(){
+    const st = S.stats, bd = S.badges || [];
+    return `<div class="card"><div class="row"><div style="font-size:56px">${S.profile.avatar === "cat" ? "🐱" : esc(S.profile.avatar)}</div><div class="sp"><h2 style="margin:0">${esc(S.profile.username || "Set a username")}</h2><div class="mut">ID: ${esc(S.profile.referral_code)}</div></div></div>
+      <div class="grid" style="margin-top:10px">${[["Games",st.total_games],["Wins",st.wins],["Best score",st.best_score],["🪙 Coins",S.wallet.coins],["Level",S.xp.level],["Badges",bd.length]].map(([a,b]) => `<div class="card" style="margin:0;text-align:center"><b style="font-size:20px">${fmt(b)}</b><div class="mut">${a}</div></div>`).join("")}</div></div>
+      <div class="card"><h2>Edit profile</h2><input id="pName" placeholder="Username (3-20, letters/numbers/_)" value="${esc(S.profile.username || "")}" maxlength="20"><p><select id="pAv">${["cat","🐶","🦊","🐼","🦄","🐯"].map(a => `<option ${S.profile.avatar === a ? "selected" : ""} value="${a}">${a === "cat" ? "🐱" : a}</option>`).join("")}</select></p><button class="btn" onclick="saveProfile()">${t("save")}</button></div>
+      <div class="grid"><button class="tile" onclick="go('ach')"><span class="ic">🎖️</span>${t("ach")}</button><button class="tile" onclick="go('history')"><span class="ic">📜</span>${t("history")}</button><button class="tile" onclick="go('settings')"><span class="ic">⚙️</span>${t("settings")}</button><button class="tile" onclick="shareCard('profile')"><span class="ic">📤</span>${t("share")}</button></div>`;
+  },
+
+  /* 3. Daily rewards calendar */
+  daily(){
+    const L = S.login, vals = CFG.rewards?.login || [50,100,150,200,300,400,500], next = L.will_reset || L.cycle_day >= 7 ? 1 : L.cycle_day + 1;
+    return `<div class="card"><div class="days">${vals.map((v,i) => { const d = i+1, done = !L.will_reset && (d <= L.cycle_day && !(L.cycle_day >= 7 && L.can_claim)); return `<div class="day ${done ? "done" : ""} ${L.can_claim && d === next ? "now" : ""}"><b>D${d}</b><div>${done ? "✅" : "🪙"}</div>${v}</div>`; }).join("")}</div>
+      ${L.will_reset ? `<p class="mut">You missed a day - the calendar restarts at Day 1.</p>` : ""}
+      <p><button class="btn gold" ${L.can_claim ? "" : "disabled"} onclick="claimLogin(this)">${L.can_claim ? `${t("claim")} Day ${next}` : "Come back tomorrow"}</button></p></div>
+      <div class="card">${lbl("🔥 "+t("streak"), S.streak.current_streak)}${lbl("Best streak", S.streak.best_streak)}
+      <p><button class="btn alt" onclick="buyFreeze()">🧊 Streak freeze (${CFG.rewards?.freeze_cost || 300} 🪙)</button> <button class="btn alt" onclick="adFreeze()" ${NATIVE.ads() ? "" : "disabled"}>📺 Free via ad</button></p><div class="mut">Saves your streak if you missed exactly one day. Max ${CFG.rewards?.freeze_monthly_max || 3} per month.</div>${NATIVE.ads() ? "" : `<div class="note">Rewarded ads need the Android app build (AdMob).</div>`}</div>`;
+  },
+
+  /* 4. Missions */
+  missions(){
+    return `${(S.missions || []).map(m => { const done = m.progress >= m.target; return `<div class="card"><div class="row"><b class="sp">${missionName(m)}</b><span class="chip gold">+${m.reward} 🪙</span></div><div class="bar" style="margin:8px 0"><i style="width:${Math.min(100, m.progress/m.target*100)}%"></i></div><div class="row"><span class="mut sp">${fmt(m.progress)}/${fmt(m.target)}</span><button class="btn" ${done && !m.claimed ? "" : "disabled"} onclick="claimMission(${m.slot},this)">${m.claimed ? t("claimed") : t("claim")}</button></div></div>`; }).join("") || '<div class="card mut">Loading missions…</div>'}`;
+  },
+
+  /* 5. Leaderboard */
+  board(){ return `<div class="tabs"><button id="lbW" class="on" onclick="loadBoard('wins')">Wins</button><button id="lbS" onclick="loadBoard('score')">Best score</button></div><div class="card" id="lbBody">…</div>`; },
+
+  /* 6. Coin shop */
+  shop(){
+    const owned = Object.fromEntries((S.inventory || []).map(i => [i.item_id, i])), items = CFG.shop || [];
+    const iap = (CFG.iap || []).filter(i => i.type !== "piggy");
+    return `${["character","skin","theme"].map(k => `<h2>${k === "character" ? "Characters" : k === "skin" ? "Skins" : "Themes"}</h2><div class="grid">${items.filter(i => i.kind === k).map(i => { const o = owned[i.id]; return `<div class="card" style="margin:0;text-align:center"><div style="font-size:34px">${o ? "✅" : "🔒"}</div><b>${esc(i.name)}</b><div class="mut">${i.price ? i.price + " 🪙" : "Free"}</div>${o ? `<button class="btn alt" onclick="equip('${i.id}')" ${o.equipped ? "disabled" : ""}>${o.equipped ? t("equipped") : t("equip")}</button>` : `<button class="btn" onclick="buyItem('${i.id}')">${t("buy")}</button>`}</div>`; }).join("")}</div>`).join("")}
+      <h2>Coins & Premium</h2><div class="grid">${iap.map(i => `<div class="card" style="margin:0;text-align:center"><div style="font-size:30px">${{coins:"💰",remove_ads:"🚫",starter:"🎁",premium:"👑",season_premium:"🏅"}[i.type]}</div><b>${esc(iapName(i))}</b><button class="btn gold" onclick="buy('${i.sku}')" ${NATIVE.billing() ? "" : "disabled"}>Buy</button></div>`).join("")}</div>
+      ${NATIVE.billing() ? "" : `<div class="note">Real-money purchases need the Android app build with Google Play Billing. Purchases are verified server-side with the Play Developer API before any grant.</div>`}
+      <div class="card"><div class="row"><b class="sp">📺 ${t("watch")}: +${CFG.rewards?.ad_coins || 500} 🪙</b><button class="btn" ${NATIVE.ads() && !S.profile.ads_removed ? "" : "disabled"} onclick="adCoins()">${t("watch")} (${S.ads_today}/${CFG.rewards?.ad_daily_max || 5})</button></div></div>`;
+  },
+
+  /* 7/23. Collection album */
+  collection(){
+    const owned = new Set((S.inventory || []).map(i => i.item_id)), items = CFG.shop || [], cols = [...new Set(items.map(i => i.collection))];
+    return cols.map(c => { const list = items.filter(i => i.collection === c), n = list.filter(i => owned.has(i.id)).length, bonus = CFG.collections?.[c]?.bonus || 0;
+      return `<div class="card"><div class="row"><b class="sp" style="text-transform:capitalize">${esc(c)}</b><span class="chip">${n}/${list.length}</span></div><div class="bar" style="margin:8px 0"><i style="width:${n/list.length*100}%"></i></div><div class="row" style="flex-wrap:wrap">${list.map(i => `<span class="chip" style="${owned.has(i.id) ? "" : "opacity:.4"}">${owned.has(i.id) ? "✅" : "🔒"} ${esc(i.name)}</span>`).join("")}</div><div class="mut" style="margin-top:6px">Complete the set: +${bonus} 🪙 bonus</div></div>`; }).join("");
+  },
+
+  /* 8. Lucky spin */
+  spin(){
+    const seg = CFG.spin || [], n = seg.length, cols = ["#4c7dff","#8b5cf6","#2b3a9c","#6d4cd6"];
+    const grad = seg.map((s,i) => `${cols[i%4]} ${i/n*360}deg ${(i+1)/n*360}deg`).join(",");
+    return `<div class="card" style="text-align:center"><div class="wheel-wrap"><div class="pin"></div><div class="wheel" id="wheel" style="background:conic-gradient(${grad})">${seg.map((s,i) => `<span style="transform:rotate(${(i+.5)/n*360-90}deg)">${spinLabel(s)}</span>`).join("")}</div></div>
+      <button class="btn gold" id="spinBtn" ${S.free_spin_available ? "" : "disabled"} onclick="doSpin(false)">${S.free_spin_available ? "FREE SPIN" : "Free spin used today"}</button>
+      <p><button class="btn alt" ${NATIVE.ads() && !S.profile.ads_removed ? "" : "disabled"} onclick="doSpin(true)">📺 Extra spin (ad)</button></p>${NATIVE.ads() ? "" : `<div class="note">Extra spins need rewarded ads (Android build).</div>`}</div>`;
+  },
+
+  /* 9. Reward chest */
+  chest(){
+    const ready = nowMs() >= new Date(S.chest_ready_at).getTime();
+    return `<div class="card"><div class="chest ${ready ? "ready" : ""}" id="chestIc" onclick="openChest()">${ready ? "🎁" : "📦"}</div><h2 style="text-align:center" id="chestTimer">--:--:--</h2>
+      <p style="text-align:center"><button class="btn gold" ${ready ? "" : "disabled"} onclick="openChest()">${ready ? "Open chest" : "Charging…"}</button></p><div class="mut" style="text-align:center">One free chest every ${CFG.rewards?.chest_hours || 4} hours.</div></div>`;
+  },
+
+  /* 10. Daily challenge */
+  challenge(){ return `<div class="card" id="dcBody">…</div>`; },
+
+  /* 11. Achievements */
+  ach(){
+    const defs = {first_game:["🎮","First game"],games_50:["🕹️","50 games"],first_win:["🥇","First win"],wins_25:["🏆","25 wins"],score_5000:["💯","5,000 score"],streak_7:["🔥","7-day streak"],streak_30:["☄️","30-day streak"],level_5:["⭐","Level 5"],level_10:["🌟","Level 10"],collector_5:["🧩","5 items"]};
+    const have = new Set(S.badges || []);
+    return `<div class="card row" style="flex-wrap:wrap;justify-content:center">${Object.entries(defs).map(([k,[ic,n]]) => `<div class="badge ${have.has(k) ? "on" : ""}"><i>${ic}</i>${n}</div>`).join("")}</div><div class="mut">Each new badge gives +100 🪙.</div>`;
+  },
+
+  /* 12. Weekly events */
+  events(){ return `<div id="evBody"><div class="card">…</div></div>`; },
+
+  /* 13. Season pass */
+  season(){
+    const sc = CFG.season || { xp_per_tier:100, tiers:30, free:{coins:50}, premium:{coins:150} }, sp = S.season || { xp:0, has_premium:false, claimed_free:[], claimed_premium:[] };
+    const tier = Math.min(sc.tiers, Math.floor(sp.xp / sc.xp_per_tier)), start = new Date(S.season_start + "T00:00:00+05:30"), end = start.getTime() + 30*864e5;
+    let rows = ""; for (let i = 1; i <= sc.tiers; i++){ const un = i <= tier;
+      rows += `<div class="tier"><div>${i}</div><div>${(sp.claimed_free || []).includes(i) ? "✅" : `<button class="btn alt" ${un ? "" : "disabled"} onclick="claimTier(${i},'free')">${sc.free.coins} 🪙</button>`}</div><div>${(sp.claimed_premium || []).includes(i) ? "✅" : `<button class="btn" ${un && sp.has_premium ? "" : "disabled"} onclick="claimTier(${i},'premium')">${sc.premium.coins} 🪙 👑</button>`}</div></div>`; }
+    return `<div class="card"><div class="row"><b class="sp">Tier ${tier}/${sc.tiers}</b><span class="chip" id="seasonEnds">…</span></div><div class="bar" style="margin:8px 0"><i style="width:${(sp.xp % sc.xp_per_tier)/sc.xp_per_tier*100}%"></i></div><div class="mut">${sp.xp} XP · ${sc.xp_per_tier} XP per tier</div>
+      ${sp.has_premium ? '<p>👑 Premium track unlocked</p>' : `<p><button class="btn gold" onclick="buy('season_premium')" ${NATIVE.billing() ? "" : "disabled"}>Unlock premium track</button></p>`}</div>
+      <div class="tier mut"><div>#</div><div>Free</div><div>Premium</div></div>${rows}<script>countdown(document.getElementById('seasonEnds'),${end},'Ended')<\/script>`;
+  },
+
+  /* 14. Referral center */
+  refer(){
+    const code = S.profile.referral_code, link = CONFIG.SHARE_URL + "?ref=" + code;
+    return `<div class="card" style="text-align:center"><div style="font-size:50px">🤝</div><h2>Invite friends</h2><div class="mut">You and your friend each get ${CFG.rewards?.referral_coins || 500} 🪙 after the friend registers and plays their first game.</div>
+      <h1 style="letter-spacing:4px;color:var(--gold)">${esc(code)}</h1><button class="btn" onclick="shareText('Join me on Bubble Pop! Code ${esc(code)}','${esc(link)}')">Share invite</button>
+      <p class="mut">Invited: ${S.referrals.total} · Rewarded: ${S.referrals.rewarded}</p></div>
+      <div class="card"><b>Have a code?</b><div class="row" style="margin-top:6px"><input id="refIn" placeholder="Friend's code" maxlength="8" style="text-transform:uppercase"><button class="btn" onclick="applyRef()">Apply</button></div><div class="mut">Only valid on your first day, and never for your own code.</div></div>`;
+  },
+
+  /* 15. Settings (+ privacy, language, premium status, update check, reminders) */
+  settings(){
+    const s = S.settings;
+    const sw = (k, label) => `<div class="row" style="padding:6px 0"><span class="sp">${label}</span><input type="checkbox" style="width:auto" ${s[k] ? "checked" : ""} onchange="setSetting('${k}',this.checked)"></div>`;
+    return `<div class="card">${sw("sound","🔊 Sound")}${sw("vibration","📳 Vibration")}${sw("notifications_enabled","🔔 Notifications")}${sw("notify_streak","Streak reminders")}${sw("notify_chest","Free chest ready")}${sw("notify_challenge","Daily challenge")}${sw("analytics_opt_in","📈 Analytics (anonymous usage)")}
+      <div class="row" style="padding:6px 0"><span class="sp">⏰ Daily reminder time</span><input type="time" style="width:auto" value="${String(s.reminder_time).slice(0,5)}" onchange="setSetting('reminder_time',this.value)"></div>
+      <div class="note">Web builds show reminders only while the app is open. Background push needs the Android build with Firebase Cloud Messaging; the server already limits you to max 2 notifications/day and respects these switches.</div></div>
+      <div class="card"><div class="row"><span class="sp">🌐 ${t("lang")}</span><select style="width:auto" onchange="setLang(this.value)"><option value="en" ${LANG==="en"?"selected":""}>English</option><option value="hi" ${LANG==="hi"?"selected":""}>हिन्दी</option></select></div></div>
+      <div class="card">${lbl("Premium", S.profile.is_premium ? "👑 Active" : "Not active")}${lbl("Ads", S.profile.ads_removed ? "Removed" : "Shown")}${lbl("App version", CONFIG.APP_VERSION)}<p id="updMsg" class="mut"></p>
+      <button class="btn alt" onclick="checkUpdate()">Check for updates</button> <a href="${esc(CFG.privacy_url || "#")}" target="_blank" rel="noopener"><button class="btn alt">${t("privacy")}</button></a></div>
+      <div class="card"><b>Cloud save</b><div class="mut">Coins, XP, levels, badges and items are stored on the server, so they sync on every device you sign in to.</div><p id="authInfo" class="mut"></p>
+      <div class="row"><input id="linkMail" type="email" placeholder="Email to protect your progress"><button class="btn" onclick="linkEmail()">Link</button></div>
+      <div class="note">Google Play Games sign-in ${NATIVE.games() ? "is available." : "needs the Android build (Play Games Services v2)."}</div></div>`;
+  },
+
+  /* 30. Piggy */
+  piggy(){
+    const cap = CFG.rewards?.piggy_cap || 2000, pg = S.wallet.piggy_coins;
+    return `<div class="card" style="text-align:center"><div style="font-size:80px">🐷</div><h2>${fmt(pg)} / ${fmt(cap)} 🪙</h2><div class="bar"><i style="width:${pg/cap*100}%"></i></div><p class="mut">Fills as you play. Break it open with a one-time purchase.</p><button class="btn gold" ${pg > 0 && NATIVE.billing() ? "" : "disabled"} onclick="buy('piggy_unlock')">Unlock with purchase</button>${NATIVE.billing() ? "" : `<div class="note">Needs Google Play Billing (Android build).</div>`}</div>`;
+  },
+
+  /* transactions (1) */
+  history(){ return `<div class="card"><table id="txT"><tr><td>…</td></tr></table></div>`; },
+
+  /* 34. More games */
+  more(){
+    const g = CFG.more_games || [];
+    return g.length ? `<div class="grid">${g.map(x => `<div class="card" style="margin:0;text-align:center"><div style="font-size:44px">${esc(x.icon || "🎮")}</div><b>${esc(x.name)}</b><div class="mut">${esc(x.desc || "")}</div><p><a href="${esc(x.url)}" target="_blank" rel="noopener"><button class="btn">${t("play")}</button></a></p></div>`).join("")}</div>`
+      : `<div class="card mut">No games listed yet. Add your games to the <code>more_games</code> row in <code>remote_config</code>, e.g.<pre style="white-space:pre-wrap">[{"name":"My Game","icon":"🧩","desc":"Short description","url":"https://play.google.com/store/apps/details?id=..."}]</pre></div>`;
+  }
+};
+
+const missionName = m => ({ play_games:`Play ${m.target} games`, win_games:`Win ${m.target} game${m.target>1?"s":""}`, score_total:`Score ${fmt(m.target)} points total`, pop_bubbles:`Pop ${m.target} bubbles`, use_powerup:`Use ${m.target} power-ups` }[m.kind] || m.kind);
+const iapName = i => ({ remove_ads:"Remove Ads", coins:`${fmt(i.coins)} Coins`, starter:"Starter Pack (one-time)", premium:"Premium (30 days)", season_premium:"Season Premium" }[i.type] || i.sku);
+const spinLabel = s => s.type === "coins" ? s.amount + "🪙" : s.type === "xp" ? s.amount + "XP" : "🎁";
+
+/* async screen loaders */
+const loaders = {
+  async board(){ await loadBoard("wins"); },
+  async challenge(){
+    const d = await rpc("get_daily_challenge"), el = $("#dcBody"); if (!el) return;
+    el.innerHTML = `<div class="row"><b class="sp">Today's challenge</b><span class="chip">⚡ streak ${S.streak.challenge_streak} (best ${S.streak.challenge_best})</span></div><div class="mut">Same level for every player · seed ${d.seed} · ${d.config.moves} moves · ${d.config.colors} colors</div>
+      <p><button class="btn" ${d.done ? "disabled" : ""} onclick="playGame('mode=daily&seed=${d.seed}')">${d.done ? "Completed today ✅" : "▶ Play challenge"}</button></p><h2>Leaderboard</h2><table>${(d.leaderboard || []).map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.username)}</td><td>${fmt(r.score)}</td><td>${"⭐".repeat(r.stars)}</td></tr>`).join("") || "<tr><td class='mut'>No scores yet - be first!</td></tr>"}</table>`;
+  },
+  async events(){
+    const ev = await rpc("get_events"), el = $("#evBody"); if (!el) return;
+    el.innerHTML = (ev || []).map(x => `<div class="card"><div class="row"><b class="sp">${esc(x.event.title)}</b><span class="chip" id="evT${esc(x.event.id)}">…</span></div><div class="mut">Points: ${x.points} (+1 per game, +2 per win, +1 per 1000 score)</div>
+      ${(x.event.missions || []).map(m => `<div class="row" style="margin-top:6px"><span class="sp">${m.target} points</span><button class="btn" ${x.points >= m.target && !(x.claimed || []).includes(m.id) ? "" : "disabled"} onclick="claimEv('${esc(x.event.id)}','${esc(m.id)}')">${(x.claimed || []).includes(m.id) ? t("claimed") : "+" + m.reward + " 🪙"}</button></div>`).join("")}
+      <h2>Leaderboard</h2><table>${(x.leaderboard || []).map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.username)}</td><td>${r.points}</td></tr>`).join("")}</table></div>`).join("") || `<div class="card mut">No event is running right now. Create rows in <code>weekly_events</code> (with title, theme_id, starts_at, ends_at, missions) to schedule one.</div>`;
+    (ev || []).forEach(x => countdown($("#evT" + x.event.id), new Date(x.event.ends_at).getTime(), "Ended"));
+  },
+  async history(){
+    const { data } = await sb.from("coin_transactions").select("*").order("created_at", { ascending: false }).limit(100);
+    const el = $("#txT"); if (el) el.innerHTML = (data || []).map(r => `<tr><td class="mut">${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.reason)}</td><td style="color:${r.amount >= 0 ? "var(--ok)" : "var(--bad)"}">${r.amount >= 0 ? "+" : ""}${fmt(r.amount)}</td><td class="mut">${fmt(r.balance_after)}</td></tr>`).join("") || "<tr><td class='mut'>No transactions yet</td></tr>";
+  },
+  chest(){ const el = $("#chestTimer"); countdown(el, new Date(S.chest_ready_at).getTime() - clockSkew, t("ready"), () => { notifyLocal("🎁 Free chest ready!", "Open it in Bubble Pop."); }); }
+};
+
+async function loadBoard(kind){
+  $("#lbW")?.classList.toggle("on", kind === "wins"); $("#lbS")?.classList.toggle("on", kind === "score");
+  const d = await rpc("get_leaderboard", { p_kind: kind }), el = $("#lbBody"); if (!el) return;
+  el.innerHTML = `<table>${(d || []).map((r,i) => `<tr><td>${["🥇","🥈","🥉"][i] || i+1}</td><td>${esc(r.avatar === "cat" ? "🐱" : r.avatar)} ${esc(r.username)}</td><td>Lv ${r.level}</td><td><b>${fmt(kind === "wins" ? r.wins : r.best_score)}</b></td></tr>`).join("") || "<tr><td class='mut'>No players yet</td></tr>"}</table>`;
+}
+
+/* ---------- actions ---------- */
+window.go = go; window.loadBoard = loadBoard; window.buy = buy;
+async function after(){ await refresh(); render(); }
+window.claimLogin = guard(async b => { const r = await rpc("claim_login_reward"); coinBurst(b, 12); modal(`<h2>📅 Day ${r.day}</h2><p style="font-size:28px">+${fmt(r.coins)} 🪙</p>`); await after(); });
+window.claimMission = guard(async (slot, b) => { const r = await rpc("claim_mission", { p_slot: slot }); coinBurst(b, 10); await after(); });
+window.buyItem = guard(async id => { const r = await rpc("buy_item", { p_item_id: id }); if (r.collection_complete) { modal(`<h2>🎉 Collection complete!</h2><p>+${r.bonus} 🪙</p>`); coinBurst(null, 20); } else toast("Unlocked!"); await after(); });
+window.equip = guard(async id => { await rpc("equip_item", { p_item_id: id }); await after(); });
+window.adCoins = guard(async () => { const r = await rewardedAd("coins"); if (r) { coinBurst(null, 15); await after(); } });
+window.adFreeze = guard(async () => { const r = await rewardedAd("freeze"); if (r) { toast("Streak saved!"); await after(); } });
+window.buyFreeze = guard(async () => { await rpc("buy_streak_freeze"); toast("🧊 Streak saved!"); await after(); });
+window.openChest = guard(async () => { if (nowMs() < new Date(S.chest_ready_at).getTime()) return; const r = await rpc("claim_chest"); coinBurst($("#chestIc"), 14); modal(`<h2>🎁</h2><p style="font-size:28px">+${fmt(r.coins)} 🪙</p>`); await after(); });
+window.claimTier = guard(async (i, tr) => { await rpc("claim_season_tier", { p_tier: i, p_track: tr }); coinBurst(null, 8); await after(); });
+window.claimEv = guard(async (e, m) => { await rpc("claim_event_mission", { p_event: e, p_mission: m }); coinBurst(null, 10); await after(); loaders.events(); });
+window.saveProfile = guard(async () => { await rpc("set_profile", { p_username: $("#pName").value.trim() || null, p_avatar: $("#pAv").value, p_language: null }); toast("Saved"); await after(); });
+window.setLang = guard(async l => { LANG = l; localStorage.setItem("bp_lang", l); await rpc("set_profile", { p_username: null, p_avatar: null, p_language: l }); await after(); });
+window.setSetting = guard(async (k, v) => { const { error } = await sb.from("player_settings").update({ [k]: v, updated_at: new Date().toISOString() }).eq("user_id", (await sb.auth.getUser()).data.user.id); if (error) throw error;
+  if (k === "notifications_enabled" && v && "Notification" in window) Notification.requestPermission(); await refresh(); scheduleReminder(); });
+window.applyRef = guard(async () => { const c = $("#refIn").value.trim(); if (!c) return; await rpc("bootstrap_player", { p_username: null, p_ref_code: c }); toast("Code applied. Rewards arrive after your first game."); await after(); });
+window.linkEmail = guard(async () => { const e = $("#linkMail").value.trim(); if (!e) return; const { error } = await sb.auth.updateUser({ email: e }); if (error) throw error; toast("Check your email to confirm"); });
+window.doSpin = guard(async ad => {
+  const r = ad ? await rewardedAd("spin") : await rpc("spin_free"); if (!r) return;
+  const idx = r.index, n = (CFG.spin || []).length, w = $("#wheel");
+  w.style.transform = `rotate(${360*5 - (idx + .5) / n * 360}deg)`; vib([20,40,20]); await sleep(4200);
+  const x = r.result; coinBurst(w, 12); modal(`<h2>🎡</h2><p style="font-size:26px">${x.type === "coins" ? "+" + x.amount + " 🪙" : x.type === "xp" ? "+" + x.amount + " XP" : "🎁 New item!"}</p>`); await after();
+});
+window.checkUpdate = () => { const min = CFG.min_app_version || CONFIG.APP_VERSION, cmp = (a, b) => { a = a.split(".").map(Number); b = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((a[i]||0) !== (b[i]||0)) return (a[i]||0) - (b[i]||0); return 0; };
+  $("#updMsg").textContent = cmp(CONFIG.APP_VERSION, min) < 0 ? `Update available (${min}). ${CONFIG.PLAY_STORE_URL ? "Open the Play Store to update." : ""}` : "You're up to date."; };
+
+/* play: opens game in overlay and listens for results */
+window.playGame = (q = "") => {
+  if (!CONFIG.GAME_URL) return toast("Set CONFIG.GAME_URL to your Bubble Pop index.html");
+  const f = document.createElement("div"); f.className = "modal"; f.style.padding = "0";
+  f.innerHTML = `<iframe src="${esc(CONFIG.GAME_URL + (CONFIG.GAME_URL.includes("?") ? "&" : "?") + q)}" style="width:100%;height:100%;border:0;background:#fff"></iframe><button class="back" style="position:fixed;top:10px;right:10px" id="gx">✕</button>`;
+  document.body.appendChild(f); $("#gx").onclick = async () => { f.remove(); await after(); };
+};
+
+/* ---------- sharing: HD cards, emoji results, challenge links ---------- */
+async function makeCard(kind){
+  const c = document.createElement("canvas"); c.width = c.height = 1080; const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 1080, 1080); g.addColorStop(0, "#0b1230"); g.addColorStop(.55, "#2b3a9c"); g.addColorStop(1, "#8b5cf6"); x.fillStyle = g; x.fillRect(0, 0, 1080, 1080);
+  for (let i = 0; i < 24; i++){ x.beginPath(); x.arc(Math.random()*1080, Math.random()*1080, 20 + Math.random()*70, 0, 7); x.fillStyle = `rgba(255,255,255,${.04 + Math.random()*.08})`; x.fill(); }
+  x.textAlign = "center"; x.fillStyle = "#fff"; x.font = "bold 80px system-ui"; x.fillText("Bubble Pop", 540, 170);
+  const st = S.stats, lines = kind === "streak" ? [["🔥", S.streak.current_streak + " day streak"], ["Best", S.streak.best_streak + " days"]]
+    : kind === "win" ? [["🏆", "Victory!"], ["Best score", fmt(st.best_score)]] : [["⭐ Level " + S.xp.level, ""], ["Games", st.total_games + " · Wins " + st.wins], ["Best score", fmt(st.best_score)]];
+  x.font = "bold 150px system-ui"; x.fillText(lines[0][0], 540, 500); x.font = "bold 90px system-ui"; if (lines[0][1]) x.fillText(lines[0][1], 540, 620);
+  x.font = "bold 64px system-ui"; x.fillStyle = "#ffd75e"; lines.slice(1).forEach((l, i) => x.fillText(l.join(": "), 540, 740 + i * 90));
+  x.fillStyle = "#cfd6ff"; x.font = "42px system-ui"; x.fillText(S.profile.username || "Player", 540, 990);
+  return await new Promise(r => c.toBlob(r, "image/png"));
+}
+async function claimShare(kind){ try { const r = await rpc("claim_share_reward", { p_kind: kind }); coinBurst(null, 8); toast(`+${r.coins} 🪙`); await refresh(); } catch (e) { if (!/share_|play_a_game|already/.test(e.message)) toast(errMsg(e)); } }
+window.shareCard = guard(async kind => {
+  const blob = await makeCard(kind), file = new File([blob], "bubblepop.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: "Play Bubble Pop with me! " + CONFIG.SHARE_URL }); await claimShare("share_earn"); }   // reward only after the share sheet completes
+  else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "bubblepop.png"; a.click(); toast("Card saved - share it from your gallery"); }
+});
+window.shareText = guard(async (text, url) => { if (navigator.share) await navigator.share({ text, url }); else { await navigator.clipboard.writeText(text + " " + url); toast("Copied!"); } });
+window.shareEmoji = guard(async (score, stars, label) => {                      // 32: no hidden answers - only score tiers
+  const full = Math.max(0, Math.min(3, stars)), grid = "⭐".repeat(full) + "⬛".repeat(3 - full);
+  const text = `Bubble Pop ${label || "Daily"} ${new Date().toISOString().slice(0, 10)}\n${grid} ${fmt(score)}\n${CONFIG.SHARE_URL}`;
+  if (navigator.share) await navigator.share({ text }); else { await navigator.clipboard.writeText(text); toast("Result copied"); }
+  await claimShare("share_earn");
+});
+window.shareStory = guard(async () => { const blob = await makeCard("profile"), file = new File([blob], "story.png", { type: "image/png" });   // 9: story bonus after real share
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); const r = await rpc("claim_share_reward", { p_kind: "instagram_story" }); toast(`+${r.coins} 🪙`); await after(); } else toast("Sharing images isn't supported on this browser"); });
+window.challengeFriend = guard(async (seed, score) => { const code = await BubbleRewards.createChallenge(seed, score); const url = CONFIG.SHARE_URL + "?c=" + code; await shareText(`Beat my score of ${fmt(score)} in Bubble Pop!`, url); });
+
+/* ---------- reminders (web: only while open; push needs native FCM) ---------- */
+let remTimer;
+function notifyLocal(title, body){ if (S?.settings?.notifications_enabled && "Notification" in window && Notification.permission === "granted") new Notification(title, { body }); }
+function scheduleReminder(){ clearTimeout(remTimer); if (!S?.settings?.notifications_enabled) return; const [h, m] = String(S.settings.reminder_time).split(":").map(Number), d = new Date(); d.setHours(h, m, 0, 0); if (d < new Date()) d.setDate(d.getDate() + 1);
+  remTimer = setTimeout(() => { if (S.streak.last_play_day !== S.day) notifyLocal("🔥 Keep your streak!", "Play today to keep it going."); scheduleReminder(); }, d - new Date()); }
+
+/* ---------- render / boot ---------- */
+async function render(){
+  if (!S) return;
+  shell((screens[view] || screens.home)());
+  if (loaders[view]) loaders[view]().catch(e => toast(errMsg(e)));
+  const sc = $("#app").querySelector("script"); if (sc){ const s = document.createElement("script"); s.textContent = sc.textContent; sc.replaceWith(s); }
+}
+async function boot(){
+  if (!configured()){ $("#app").innerHTML = `<div class="card"><h2>Setup needed</h2><p>Edit <code>CONFIG</code> at the top of this file with your Supabase URL and <b>anon</b> key, run the three SQL migrations, enable <b>Anonymous sign-ins</b> (Auth → Providers), and deploy the Edge Functions. See README.md.</p></div>`; return; }
+  sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  let { data: { session } } = await sb.auth.getSession();
+  if (!session){ const { error } = await sb.auth.signInAnonymously(); if (error){ $("#app").innerHTML = `<div class="card">Sign-in failed: ${esc(error.message)}</div>`; return; } }
+  const qs = new URLSearchParams(location.search), refCode = qs.get("ref");
+  await loadConfig();
+  const bs = await rpc("bootstrap_player", { p_username: null, p_ref_code: refCode });
+  await refresh(); await ensureMissions(); await flushQueue().catch(() => {}); await refresh();
+  const h = location.hash.slice(1); if (screens[h]) view = h;
+  render(); scheduleReminder();
+  if (bs?.comeback) modal(`<h2>🎁 ${t("welcome")}</h2><p>You were away ${bs.comeback.days_away} days.</p><p style="font-size:28px">+${fmt(bs.comeback.coins)} 🪙</p>`, () => coinBurst(null, 14));
+  const ch = qs.get("c"); if (ch){ const c = await rpc("get_challenge", { p_code: ch }); if (c) modal(`<h2>⚔️ Challenge</h2><p>${esc(c.creator)} scored <b>${fmt(c.creator_score)}</b>. Play the same level and beat it!</p>`, () => playGame("mode=challenge&code=" + ch + "&seed=" + c.seed)); }
+  if (S.stats.total_games === 0 && !S.profile.username) go("me");
+}
+async function ensureMissions(){ try { await rpc("ensure_missions"); await refresh(); } catch (e) {} }
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (screens[h] && h !== view){ view = h; render(); } });
+boot();
+</script>
+</body>
+</html>
